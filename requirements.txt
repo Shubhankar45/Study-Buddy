@@ -1,0 +1,22 @@
+# Core web framework and utilities
+flask>=3.1.1
+werkzeug>=3.1.3
+
+# Real-time communication
+flask-socketio>=5.5.1
+eventlet>=0.40.2
+
+# Database and ORM
+flask-sqlalchemy>=3.1.1
+sqlalchemy>=2.0.42
+psycopg2-binary>=2.9.10
+
+# User authentication and management
+flask-login>=0.6.3
+email-validator>=2.2.0
+
+# Environment variables
+python-dotenv>=1.1.1
+
+# Production web server
+gunicorn>=23.0.0
