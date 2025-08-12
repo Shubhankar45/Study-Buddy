@@ -1,6 +1,7 @@
+eventlet.monkey_patch()
 from app import app, socketio
 import eventlet
-eventlet.monkey_patch()  # needed if using eventlet
+  # needed if using eventlet
 
 if __name__ == "__main__":
     socketio.run(
