@@ -4,7 +4,11 @@ werkzeug>=3.1.3
 
 # Real-time communication
 flask-socketio>=5.5.1
-eventlet>=0.40.2
+python-socketio>=5.12.1  # explicit server lib used by Flask-SocketIO [7][16]
+eventlet>=0.40.2         # preferred async engine [4]
+gevent>=24.2.1           # alternative async engine [4]
+gevent-websocket>=0.10.1 # WebSocket support when using gevent [4]
+simple-websocket>=1.0.0  # for Gunicorn gthread fallback [12]
 
 # Database and ORM
 flask-sqlalchemy>=3.1.1
@@ -14,9 +18,13 @@ psycopg2-binary>=2.9.10
 # User authentication and management
 flask-login>=0.6.3
 email-validator>=2.2.0
+dnspython>=2.6.1  # improves email validation
 
 # Environment variables
 python-dotenv>=1.1.1
 
 # Production web server
 gunicorn>=23.0.0
+
+# Optional: horizontal scaling / message queue
+redis>=5.0.0  # for multi-process/instance Socket.IO message queue [4]
