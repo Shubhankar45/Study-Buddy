@@ -1,0 +1,592 @@
+/* =====================================
+   🌟 StudySync - Light UI Theme Styles
+   ===================================== */
+
+:root {
+    --font-base: 'Poppins', sans-serif;
+    --font-mono: 'Courier New', monospace;
+    --color-primary: #4e73df;
+    --color-success: #1cc88a;
+    --color-warning: #f6c23e;
+    --color-info: #36b9cc;
+    --color-danger: #e74a3b;
+    --color-light: #f8f9fc;
+    --color-muted: #858796;
+    --border-radius: 0.75rem;
+    --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Base */
+body {
+    font-family: var(--font-base);
+    background-color: var(--color-light);
+    color: #343a40;
+}
+
+a {
+    color: var(--color-primary);
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #2e59d9;
+    text-decoration: none;
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    background-color: #ffffff;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Header */
+.card-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-info));
+    color: white;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+    text-align: center;
+    padding: 1.2rem;
+}
+
+/* Form Controls */
+.form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Buttons */
+.btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Timer Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(30, 144, 255, 0.8), 0 0 30px rgba(30, 144, 255, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes colorShift {
+    0% { color: #28a745; }
+    25% { color: #17a2b8; }
+    50% { color: #ffc107; }
+    75% { color: #dc3545; }
+    100% { color: #28a745; }
+}
+
+/* Timer Display Styles */
+.timer-display {
+    font-size: 3.5rem;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    color: #28a745;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.timer-display.active {
+    animation: pulse 2s infinite, glow 3s infinite;
+    color: #007bff;
+}
+
+.timer-display.paused {
+    color: #ffc107;
+    animation: shake 0.5s ease-in-out;
+}
+
+.timer-display.completed {
+    color: #28a745;
+    animation: bounce 1s ease-in-out;
+}
+
+/* Progress Ring Animation */
+.timer-progress {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+}
+
+.timer-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.timer-progress .progress-ring {
+    fill: none;
+    stroke: #e9ecef;
+    stroke-width: 8;
+}
+
+.timer-progress .progress-ring-active {
+    fill: none;
+    stroke: #007bff;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.3s ease;
+    animation: glow 2s infinite;
+}
+
+/* Button Animations */
+.start-timer-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.start-timer-btn:hover {
+    background: linear-gradient(45deg, #218838, #1db584);
+    animation: pulse 0.6s ease-in-out;
+}
+
+.start-timer-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.start-timer-btn:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+.pause-timer-btn {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    border: none;
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+.pause-timer-btn:hover {
+    background: linear-gradient(45deg, #e0a800, #e8590c);
+    animation: shake 0.3s ease-in-out;
+}
+
+.mark-complete-btn {
+    background: linear-gradient(45deg, #6f42c1, #e83e8c);
+    border: none;
+    color: white;
+}
+
+.mark-complete-btn:hover {
+    background: linear-gradient(45deg, #59359a, #d91a72);
+    animation: bounce 0.6s ease-in-out;
+}
+
+/* Subtopic Progress Indicators */
+.progress-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.progress-indicator.status-not-started {
+    background-color: #dee2e6;
+    border: 2px solid #adb5bd;
+}
+
+.progress-indicator.status-in-progress {
+    background-color: #007bff;
+    animation: pulse 1.5s infinite, glow 2s infinite;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.6);
+}
+
+.progress-indicator.status-completed {
+    background-color: #28a745;
+    animation: bounce 0.8s ease-in-out;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+}
+
+.progress-indicator.status-completed::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    color: white;
+    font-weight: bold;
+}
+
+/* Timer Controls Animation */
+.timer-controls-active {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Study Card Enhancement */
+.study-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.study-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.study-card.timer-active {
+    border: 2px solid #007bff;
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+    animation: glow 3s infinite;
+}
+
+/* Motivational Messages */
+.motivational-message {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, #ff6b6b, #ffa726);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    opacity: 0;
+    animation: motivationPop 3s ease-in-out;
+    z-index: 1000;
+}
+
+@keyframes motivationPop {
+    0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.8); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    85% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.8); }
+}
+
+/* Confetti Animation for Completion */
+.confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #007bff;
+    animation: confetti-fall 3s linear infinite;
+}
+
+.confetti-piece:nth-child(2n) { background: #28a745; animation-delay: 0.2s; }
+.confetti-piece:nth-child(3n) { background: #ffc107; animation-delay: 0.4s; }
+.confetti-piece:nth-child(4n) { background: #dc3545; animation-delay: 0.6s; }
+.confetti-piece:nth-child(5n) { background: #6f42c1; animation-delay: 0.8s; }
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+}
+
+/* Timer */
+.timer-display {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+.timer-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Progress Dots */
+.progress-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+    border: 2px solid #dee2e6;
+}
+
+.status-not-started { background-color: #d1d3e2; }
+.status-in-progress { background-color: var(--color-warning); animation: pulse 1.5s infinite; }
+.status-completed { background-color: var(--color-success); }
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(246, 194, 62, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(246, 194, 62, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(246, 194, 62, 0); }
+}
+
+/* Stats Card */
+.stats-card {
+    background: #f1f4fb;
+    border: 1px solid #dfe3ee;
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* User Badge */
+.user-badge {
+    background: #eef1f8;
+    color: #4b5563;
+    padding: 0.35rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.user-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Syllabus Form */
+.topic-section {
+    background-color: #f9f9fb;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: 1.2rem;
+    margin-bottom: 1.2rem;
+}
+
+/* Tables */
+.table-study {
+    font-size: 0.95rem;
+    border-color: #e2e8f0;
+}
+
+.table-study th {
+    background-color: #e8efff;
+    font-weight: 600;
+}
+
+.table-study td {
+    vertical-align: middle;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #f0f4ff, #e0fff6);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+}
+
+/* Features Section */
+.features-section .card {
+    background: #ffffff;
+    border: 1px solid #ebedf0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.features-section .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alerts */
+.alert {
+    border-radius: 0.5rem;
+}
+
+.alert-success {
+    background-color: #e6f9f1;
+    color: var(--color-success);
+}
+
+.alert-danger {
+    background-color: #fdecea;
+    color: var(--color-danger);
+}
+
+.alert-warning {
+    background-color: #fff8e5;
+    color: var(--color-warning);
+}
+
+.alert-info {
+    background-color: #e9f7fc;
+    color: var(--color-info);
+}
+
+/* Navbar */
+.navbar {
+    background-color: white;
+    border-bottom: 1px solid #eaeaea;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* Footer */
+footer {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+/* Utilities */
+.text-gradient {
+    background: linear-gradient(to right, var(--color-primary), var(--color-success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.shadow-soft {
+    box-shadow: var(--box-shadow);
+}
+
+.bg-dark {
+    background-color: rgba(var(--bs-dark-rgb), var(--bs-bg-opacity)) !important;
+}
+
+/* Timer specific styles */
+.subtopic-actions .btn {
+    margin-left: 0.25rem;
+}
+
+.subtopic-actions .btn:first-child {
+    margin-left: 0;
+}
+
+.topic-editor {
+    background-color: #f8f9fa;
+}
+
+.subtopic-editor {
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+}
+
+/* Disabled state for timer buttons */
+.btn.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}

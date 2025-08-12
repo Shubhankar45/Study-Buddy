@@ -1,0 +1,879 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - StudySync{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold">
+                    <i class="fas fa-users me-2 text-primary"></i>{{ room.name }}
+                </h2>
+                <p class="text-muted mb-0">Room ID: <span class="badge bg-secondary">{{ room.room_id }}</span></p>
+            </div>
+            <div>
+                {% if is_creator %}
+                <span class="badge bg-warning text-dark me-2">
+                    <i class="fas fa-crown me-1"></i>Creator
+                </span>
+                {% endif %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room Members -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card study-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-users me-2"></i>Room Members ({{ members|length }})
+                </h5>
+                <div class="row">
+                    {% for member in members %}
+                    <div class="col-md-3 mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="progress-indicator bg-success me-2" id="user-status-{{ member.id }}"></div>
+                            <span>{{ member.username }}</span>
+                            {% if member.id == room.creator_id %}
+                            <i class="fas fa-crown text-warning ms-2" title="Room Creator"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Study Topics and Timer -->
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Syllabus Section -->
+        <div class="card study-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-book me-2"></i>Study Syllabus
+                </h5>
+                {% if is_creator %}
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#syllabusModal">
+                    <i class="fas fa-edit me-1"></i>Edit Syllabus
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if topics %}
+                    <div id="syllabus-content">
+                        {% for topic in topics %}
+                        <div class="topic-section mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="topic-title fw-bold text-primary mb-0">
+                                    <i class="fas fa-folder me-2"></i>{{ topic.name }}
+                                </h6>
+                                <div class="text-muted small">
+                                    <span class="me-3">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ topic_times[topic.id].actual }}m / {{ topic_times[topic.id].estimated }}m
+                                    </span>
+                                    <span class="badge bg-success">
+                                        {{ topic_times[topic.id].completed_count }}/{{ topic_times[topic.id].total_count }} completed
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="subtopics ms-3">
+                                {% for subtopic in topic.subtopics %}
+                                <div class="subtopic-item d-flex align-items-center justify-content-between p-2 border rounded mb-2" 
+                                     data-subtopic-id="{{ subtopic.id }}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress-indicator status-{{ user_progress[subtopic.id].status if subtopic.id in user_progress else 'not_started' }} me-2"></div>
+                                        <span class="subtopic-name">{{ subtopic.name }}</span>
+                                        <small class="text-muted ms-2">({{ subtopic.estimated_time }} min)</small>
+                                    </div>
+                                    <div class="subtopic-actions">
+                                        {% if subtopic.id in user_progress and user_progress[subtopic.id].status == 'completed' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Completed
+                                        </span>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-success start-timer-btn" data-subtopic-id="{{ subtopic.id }}">
+                                            <i class="fas fa-play me-1"></i>Start
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning pause-timer-btn d-none" data-subtopic-id="{{ subtopic.id }}">
+                                            <i class="fas fa-pause me-1"></i>Pause
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary mark-complete-btn" 
+                                                data-subtopic-id="{{ subtopic.id }}">
+                                            <i class="fas fa-check me-1"></i>Mark Complete
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No syllabus has been created yet.</p>
+                        {% if is_creator %}
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syllabusModal">
+                            <i class="fas fa-plus me-2"></i>Create Syllabus
+                        </button>
+                        {% else %}
+                        <p class="text-muted">The room creator needs to set up the study syllabus.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="card study-card" id="timer-card">
+            <div class="card-body text-center position-relative">
+                <h5 class="card-title">
+                    <i class="fas fa-stopwatch me-2"></i>Study Timer
+                </h5>
+                
+                <!-- Progress Ring -->
+                <div class="timer-progress" id="timer-progress" style="display: none;">
+                    <svg>
+                        <circle class="progress-ring" cx="100" cy="100" r="90"></circle>
+                        <circle class="progress-ring-active" cx="100" cy="100" r="90" 
+                                id="progress-circle" 
+                                style="stroke-dasharray: 565.5; stroke-dashoffset: 565.5;"></circle>
+                    </svg>
+                    <div class="timer-display" id="timer-display">00:00:00</div>
+                </div>
+                
+                <!-- Default Timer Display -->
+                <div class="timer-display mb-3" id="timer-display-default">00:00:00</div>
+                
+                <div id="current-subtopic" class="text-muted mb-3">No active session</div>
+                
+                <!-- Motivational Message Container -->
+                <div id="motivation-container" class="position-relative"></div>
+                
+                <div id="timer-controls">
+                    <p class="text-muted">Select a subtopic to start studying</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Collaborative Notes -->
+        <div class="card study-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-sticky-note me-2"></i>Notes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="notes-section mb-3" id="notes-container" style="max-height: 300px; overflow-y: auto;">
+                    {% for note in notes %}
+                    <div class="note-item p-3 mb-2 rounded bg-light">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="text-primary">{{ note.author_name if note.author_name else 'Unknown' }}</strong>
+                                <small class="text-muted ms-2">{{ note.created_at.strftime('%m/%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                        <div class="note-content mt-2">{{ note.content }}</div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No notes yet. Be the first to add one!</p>
+                    {% endfor %}
+                </div>
+                
+                <form id="add-note-form" action="{{ url_for('add_note', room_id=room.room_id) }}" method="POST">
+                    <div class="mb-2">
+                        <textarea class="form-control" name="content" placeholder="Add a note to share with the room..." rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-plus me-1"></i>Add Note
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Syllabus Modal -->
+{% if is_creator %}
+<div class="modal fade" id="syllabusModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Study Syllabus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="syllabusForm" action="{{ url_for('update_syllabus', room_id=room.room_id) }}" method="POST">
+                    <div id="topics-container">
+                        <!-- Topics will be added here dynamically -->
+                    </div>
+                    <button type="button" class="btn btn-success" id="add-topic-btn">
+                        <i class="fas fa-plus me-1"></i>Add Topic
+                    </button>
+                    <input type="hidden" name="syllabus_data" id="syllabus-data">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-syllabus">Save Syllabus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let socket;
+let currentTimer = null;
+let currentSession = null;
+let startTime = null;
+let elapsedSeconds = 0;
+let currentSubtopicId = null;
+let progressCircle = null;
+let motivationalMessages = [
+    "You're doing great! 🌟",
+    "Stay focused! 💪",
+    "Keep it up! 🚀",
+    "You're on fire! 🔥",
+    "Almost there! ⭐",
+    "Great progress! 🎯",
+    "You're unstoppable! ⚡",
+    "Focus mode: ON! 🧠"
+];
+
+// Initialize socket connection
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Socket.IO
+    socket = io();
+    
+    // Join room
+    socket.emit('join_room', {room_id: '{{ room.room_id }}'});
+    
+    // Socket event listeners
+    socket.on('user_joined', function(data) {
+        console.log('User joined:', data);
+    });
+    
+    socket.on('user_left', function(data) {
+        console.log('User left:', data);
+    });
+    
+    socket.on('timer_started', function(data) {
+        console.log('Timer started by:', data.username);
+        updateUserStatus(data.user_id, 'studying');
+    });
+    
+    socket.on('timer_stopped', function(data) {
+        console.log('Timer stopped by:', data.username);
+        updateUserStatus(data.user_id, 'idle');
+    });
+    
+    socket.on('note_added', function(noteData) {
+        addNoteToContainer(noteData);
+    });
+    
+    socket.on('progress_updated', function(data) {
+        updateSubtopicProgress(data.subtopic_id, data.status);
+    });
+    
+    // Initialize timer controls
+    initializeTimerControls();
+    
+    // Initialize syllabus editor if creator
+    {% if is_creator %}
+    initializeSyllabusEditor();
+    {% endif %}
+});
+
+function initializeTimerControls() {
+    // Start timer buttons
+    document.querySelectorAll('.start-timer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const subtopicId = this.getAttribute('data-subtopic-id');
+            startTimer(subtopicId);
+        });
+    });
+    
+    // Pause timer buttons
+    document.querySelectorAll('.pause-timer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            pauseTimer();
+        });
+    });
+    
+    // Mark complete buttons
+    document.querySelectorAll('.mark-complete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const subtopicId = this.getAttribute('data-subtopic-id');
+            markComplete(subtopicId);
+        });
+    });
+}
+
+function startTimer(subtopicId) {
+    if (currentTimer) {
+        pauseTimer();
+    }
+    
+    // Call API to start timer
+    fetch('/api/timer/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({subtopic_id: parseInt(subtopicId)})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentSession = data.session_id;
+            currentSubtopicId = subtopicId;
+            startTime = new Date();
+            elapsedSeconds = 0;
+            
+            // Update UI
+            const subtopicElement = document.querySelector(`[data-subtopic-id="${subtopicId}"]`);
+            const subtopicName = subtopicElement.querySelector('.subtopic-name').textContent;
+            
+            document.getElementById('current-subtopic').textContent = `Studying: ${subtopicName}`;
+            
+            // Hide start button, show pause button
+            const startBtn = subtopicElement.querySelector('.start-timer-btn');
+            const pauseBtn = subtopicElement.querySelector('.pause-timer-btn');
+            
+            startBtn.classList.add('d-none');
+            pauseBtn.classList.remove('d-none');
+            
+            // Update progress indicator
+            const progressIndicator = subtopicElement.querySelector('.progress-indicator');
+            progressIndicator.className = 'progress-indicator status-in-progress me-2';
+            
+            // Activate animated timer display
+            activateTimerDisplay();
+            
+            // Show motivational message
+            showMotivationalMessage();
+            
+            // Add timer active effects
+            addTimerActiveEffects();
+            
+            // Initialize progress circle
+            progressCircle = document.getElementById('progress-circle');
+            
+            // Start timer display
+            currentTimer = setInterval(updateTimerDisplay, 1000);
+            
+            // Emit socket event
+            socket.emit('timer_start', {
+                room_id: '{{ room.room_id }}',
+                subtopic_id: subtopicId
+            });
+            
+            // Disable all other timer buttons
+            document.querySelectorAll('.start-timer-btn').forEach(btn => {
+                if (btn.getAttribute('data-subtopic-id') !== subtopicId) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled');
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error starting timer:', error);
+        alert('Failed to start timer. Please try again.');
+    });
+}
+
+function pauseTimer() {
+    if (!currentTimer || !currentSession) return;
+    
+    clearInterval(currentTimer);
+    currentTimer = null;
+    
+    const durationSeconds = Math.floor((new Date() - startTime) / 1000) + elapsedSeconds;
+    
+    // Call API to stop timer
+    fetch('/api/timer/stop', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            session_id: currentSession,
+            duration_seconds: durationSeconds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show paused animation
+            updateTimerAnimations();
+            
+            // Reset UI
+            document.getElementById('current-subtopic').textContent = 'No active session';
+            
+            // Show start button, hide pause button
+            if (currentSubtopicId) {
+                const subtopicElement = document.querySelector(`[data-subtopic-id="${currentSubtopicId}"]`);
+                const startBtn = subtopicElement.querySelector('.start-timer-btn');
+                const pauseBtn = subtopicElement.querySelector('.pause-timer-btn');
+                
+                startBtn.classList.remove('d-none');
+                pauseBtn.classList.add('d-none');
+                
+                // Update progress indicator to in-progress
+                const progressIndicator = subtopicElement.querySelector('.progress-indicator');
+                progressIndicator.className = 'progress-indicator status-in-progress me-2';
+            }
+            
+            // Remove timer active effects
+            removeTimerActiveEffects();
+            
+            // Deactivate timer display
+            deactivateTimerDisplay();
+            
+            // Re-enable all timer buttons
+            document.querySelectorAll('.start-timer-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+            });
+            
+            // Emit socket event
+            socket.emit('timer_stop', {
+                room_id: '{{ room.room_id }}',
+                duration: data.duration_minutes
+            });
+            
+            // Reset variables
+            currentSession = null;
+            currentSubtopicId = null;
+            startTime = null;
+            elapsedSeconds = 0;
+        }
+    })
+    .catch(error => {
+        console.error('Error stopping timer:', error);
+    });
+}
+
+function markComplete(subtopicId) {
+    // If timer is running for this subtopic, pause it first
+    if (currentSubtopicId === subtopicId) {
+        pauseTimer();
+    }
+    
+    fetch('/api/progress/complete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({subtopic_id: parseInt(subtopicId)})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const subtopicElement = document.querySelector(`[data-subtopic-id="${subtopicId}"]`);
+            
+            // Update progress indicator
+            const progressIndicator = subtopicElement.querySelector('.progress-indicator');
+            progressIndicator.className = 'progress-indicator status-completed me-2';
+            
+            // Replace actions with completed badge
+            const actionsDiv = subtopicElement.querySelector('.subtopic-actions');
+            actionsDiv.innerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>';
+            
+            // Show completion celebration
+            showCompletionCelebration();
+            
+            // Emit socket event
+            socket.emit('progress_update', {
+                room_id: '{{ room.room_id }}',
+                subtopic_id: subtopicId,
+                status: 'completed'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error marking complete:', error);
+        alert('Failed to mark as complete. Please try again.');
+    });
+}
+
+function updateTimerDisplay() {
+    if (!startTime) return;
+    
+    const now = new Date();
+    const totalSeconds = Math.floor((now - startTime) / 1000) + elapsedSeconds;
+    
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update both timer displays
+    const defaultDisplay = document.getElementById('timer-display-default');
+    const progressDisplay = document.getElementById('timer-display');
+    
+    if (defaultDisplay) defaultDisplay.textContent = display;
+    if (progressDisplay) progressDisplay.textContent = display;
+    
+    // Update progress ring if active
+    if (progressCircle && currentSubtopicId) {
+        const subtopicElement = document.querySelector(`[data-subtopic-id="${currentSubtopicId}"]`);
+        if (subtopicElement) {
+            const timeInput = subtopicElement.querySelector('.estimated-time');
+            if (timeInput) {
+                const estimatedMinutes = parseInt(timeInput.textContent || timeInput.value || 30);
+                const progressPercent = Math.min((totalSeconds / 60) / estimatedMinutes * 100, 100);
+                updateProgressRing(progressPercent);
+            }
+        }
+    }
+    
+    // Show motivational messages every 5 minutes
+    if (totalSeconds % 300 === 0 && totalSeconds > 0) {
+        showMotivationalMessage();
+    }
+}
+
+function updateUserStatus(userId, status) {
+    const statusElement = document.getElementById(`user-status-${userId}`);
+    if (statusElement) {
+        statusElement.className = status === 'studying' ? 'progress-indicator status-in-progress me-2' : 'progress-indicator bg-success me-2';
+    }
+}
+
+function updateSubtopicProgress(subtopicId, status) {
+    const subtopicElement = document.querySelector(`[data-subtopic-id="${subtopicId}"]`);
+    if (subtopicElement) {
+        const progressIndicator = subtopicElement.querySelector('.progress-indicator');
+        progressIndicator.className = `progress-indicator status-${status} me-2`;
+    }
+}
+
+function addNoteToContainer(noteData) {
+    const notesContainer = document.getElementById('notes-container');
+    const noteElement = document.createElement('div');
+    noteElement.className = 'note-item p-3 mb-2 rounded bg-light';
+    noteElement.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <strong class="text-primary">${noteData.author_name}</strong>
+                <small class="text-muted ms-2">${new Date(noteData.created_at).toLocaleString()}</small>
+            </div>
+        </div>
+        <div class="note-content mt-2">${noteData.content}</div>
+    `;
+    notesContainer.prepend(noteElement);
+}
+
+{% if is_creator %}
+function initializeSyllabusEditor() {
+    let topicCounter = 0;
+    
+    document.getElementById('add-topic-btn').addEventListener('click', function() {
+        addTopicEditor();
+    });
+    
+    document.getElementById('save-syllabus').addEventListener('click', function() {
+        saveSyllabus();
+    });
+    
+    // Load existing topics if any
+    loadExistingTopics();
+    
+    function addTopicEditor(topicData = null) {
+        topicCounter++;
+        const topicDiv = document.createElement('div');
+        topicDiv.className = 'topic-editor border rounded p-3 mb-3';
+        topicDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6>Topic ${topicCounter}</h6>
+                <button type="button" class="btn btn-sm btn-danger remove-topic">Remove</button>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control topic-name" placeholder="Topic name" value="${topicData ? topicData.name : ''}" required>
+            </div>
+            <div class="subtopics-container">
+                <h6>Subtopics</h6>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary add-subtopic">Add Subtopic</button>
+        `;
+        
+        document.getElementById('topics-container').appendChild(topicDiv);
+        
+        // Add remove topic functionality
+        topicDiv.querySelector('.remove-topic').addEventListener('click', function() {
+            topicDiv.remove();
+        });
+        
+        // Add subtopic functionality
+        topicDiv.querySelector('.add-subtopic').addEventListener('click', function() {
+            addSubtopicEditor(topicDiv);
+        });
+        
+        // Load existing subtopics if any
+        if (topicData && topicData.subtopics) {
+            topicData.subtopics.forEach(subtopic => {
+                addSubtopicEditor(topicDiv, subtopic);
+            });
+        }
+    }
+    
+    function addSubtopicEditor(topicDiv, subtopicData = null) {
+        const subtopicDiv = document.createElement('div');
+        subtopicDiv.className = 'subtopic-editor d-flex align-items-center mb-2';
+        subtopicDiv.innerHTML = `
+            <input type="text" class="form-control me-2 subtopic-name" placeholder="Subtopic name" value="${subtopicData ? subtopicData.name : ''}" required>
+            <input type="number" class="form-control me-2 subtopic-time" placeholder="Time (min)" value="${subtopicData ? subtopicData.time : 30}" min="1" max="300" style="width: 120px;" required>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-subtopic">Remove</button>
+        `;
+        
+        topicDiv.querySelector('.subtopics-container').appendChild(subtopicDiv);
+        
+        // Add remove subtopic functionality
+        subtopicDiv.querySelector('.remove-subtopic').addEventListener('click', function() {
+            subtopicDiv.remove();
+        });
+    }
+    
+    function loadExistingTopics() {
+        {% for topic in topics %}
+        addTopicEditor({
+            name: '{{ topic.name }}',
+            subtopics: [
+                {% for subtopic in topic.subtopics %}
+                {
+                    name: '{{ subtopic.name }}',
+                    time: {{ subtopic.estimated_time }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        });
+        {% endfor %}
+    }
+    
+    function saveSyllabus() {
+        const topics = [];
+        
+        document.querySelectorAll('.topic-editor').forEach(topicDiv => {
+            const topicName = topicDiv.querySelector('.topic-name').value.trim();
+            if (!topicName) return;
+            
+            const subtopics = [];
+            topicDiv.querySelectorAll('.subtopic-editor').forEach(subtopicDiv => {
+                const subtopicName = subtopicDiv.querySelector('.subtopic-name').value.trim();
+                const subtopicTime = parseInt(subtopicDiv.querySelector('.subtopic-time').value);
+                
+                if (subtopicName && subtopicTime) {
+                    subtopics.push({
+                        name: subtopicName,
+                        time: subtopicTime
+                    });
+                }
+            });
+            
+            topics.push({
+                name: topicName,
+                subtopics: subtopics
+            });
+        });
+        
+        document.getElementById('syllabus-data').value = JSON.stringify(topics);
+        document.getElementById('syllabusForm').submit();
+    }
+}
+{% endif %}
+
+// Animation Functions
+function activateTimerDisplay() {
+    const defaultDisplay = document.getElementById('timer-display-default');
+    const progressDisplay = document.getElementById('timer-progress');
+    const timerDisplay = document.getElementById('timer-display');
+    
+    // Switch to animated progress display
+    defaultDisplay.style.display = 'none';
+    progressDisplay.style.display = 'block';
+    
+    // Add active animation class
+    timerDisplay.classList.add('active');
+    timerDisplay.classList.remove('paused', 'completed');
+}
+
+function deactivateTimerDisplay() {
+    const defaultDisplay = document.getElementById('timer-display-default');
+    const progressDisplay = document.getElementById('timer-progress');
+    const timerDisplay = document.getElementById('timer-display');
+    
+    // Switch back to default display
+    defaultDisplay.style.display = 'block';
+    progressDisplay.style.display = 'none';
+    
+    // Remove animation classes
+    timerDisplay.classList.remove('active', 'paused', 'completed');
+}
+
+function updateTimerAnimations() {
+    const timerDisplay = document.getElementById('timer-display');
+    
+    if (currentTimer) {
+        // Running state - pulse and glow
+        timerDisplay.classList.add('active');
+        timerDisplay.classList.remove('paused', 'completed');
+    } else {
+        // Paused state - yellow and shake
+        timerDisplay.classList.add('paused');
+        timerDisplay.classList.remove('active', 'completed');
+    }
+}
+
+function updateProgressRing(percent) {
+    if (!progressCircle) return;
+    
+    const circumference = 2 * Math.PI * 90; // r = 90
+    const offset = circumference - (percent / 100) * circumference;
+    
+    progressCircle.style.strokeDasharray = circumference;
+    progressCircle.style.strokeDashoffset = offset;
+}
+
+function showMotivationalMessage() {
+    const container = document.getElementById('motivation-container');
+    const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'motivational-message';
+    messageDiv.textContent = randomMessage;
+    
+    container.appendChild(messageDiv);
+    
+    // Remove message after animation completes
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 3000);
+}
+
+function addTimerActiveEffects() {
+    const timerCard = document.getElementById('timer-card');
+    timerCard.classList.add('timer-active');
+    
+    // Add breathing animation to current subtopic
+    const currentSubtopic = document.getElementById('current-subtopic');
+    currentSubtopic.style.animation = 'colorShift 4s infinite';
+}
+
+function removeTimerActiveEffects() {
+    const timerCard = document.getElementById('timer-card');
+    timerCard.classList.remove('timer-active');
+    
+    // Remove breathing animation from current subtopic
+    const currentSubtopic = document.getElementById('current-subtopic');
+    currentSubtopic.style.animation = '';
+}
+
+function showCompletionCelebration() {
+    // Create confetti effect
+    createConfetti();
+    
+    // Show completion message
+    const container = document.getElementById('motivation-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'motivational-message';
+    messageDiv.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+    messageDiv.textContent = 'Great job! Topic completed! 🎉';
+    
+    container.appendChild(messageDiv);
+    
+    // Update timer display for completion
+    const timerDisplay = document.getElementById('timer-display');
+    timerDisplay.classList.add('completed');
+    timerDisplay.classList.remove('active', 'paused');
+    
+    // Remove effects after celebration
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+        removeTimerActiveEffects();
+        deactivateTimerDisplay();
+    }, 3000);
+}
+
+function createConfetti() {
+    const confettiContainer = document.createElement('div');
+    confettiContainer.className = 'confetti';
+    document.body.appendChild(confettiContainer);
+    
+    // Create 50 confetti pieces
+    for (let i = 0; i < 50; i++) {
+        const confettiPiece = document.createElement('div');
+        confettiPiece.className = 'confetti-piece';
+        confettiPiece.style.left = Math.random() * 100 + '%';
+        confettiPiece.style.animationDelay = Math.random() * 2 + 's';
+        confettiPiece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confettiContainer.appendChild(confettiPiece);
+    }
+    
+    // Remove confetti after animation
+    setTimeout(() => {
+        document.body.removeChild(confettiContainer);
+    }, 4000);
+}
+
+// Enhanced updateTimerDisplay function
+function updateTimerDisplayWithAnimations() {
+    const now = new Date();
+    const elapsed = Math.floor((now - startTime) / 1000) + elapsedSeconds;
+    
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    
+    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update both displays
+    const defaultDisplay = document.getElementById('timer-display-default');
+    const progressDisplay = document.getElementById('timer-display');
+    
+    if (defaultDisplay) defaultDisplay.textContent = timeString;
+    if (progressDisplay) progressDisplay.textContent = timeString;
+    
+    // Update progress ring if active
+    if (progressCircle && currentSubtopicId) {
+        const subtopicElement = document.querySelector(`[data-subtopic-id="${currentSubtopicId}"]`);
+        if (subtopicElement) {
+            const timeInput = subtopicElement.querySelector('.estimated-time');
+            if (timeInput) {
+                const estimatedMinutes = parseInt(timeInput.textContent || timeInput.value || 30);
+                const progressPercent = Math.min((elapsed / 60) / estimatedMinutes * 100, 100);
+                updateProgressRing(progressPercent);
+            }
+        }
+    }
+    
+    // Show motivational messages every 5 minutes
+    if (elapsed % 300 === 0 && elapsed > 0) {
+        showMotivationalMessage();
+    }
+}
+</script>
+{% endblock %}
